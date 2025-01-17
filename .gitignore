@@ -1,0 +1,12 @@
+*.o
+*.out
+configure
+*.m4
+*.log
+*.status
+install-sh
+Makefile
+Makefile.in
+missing
+**/*.cache/**
+depcomp
