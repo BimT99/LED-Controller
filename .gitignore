@@ -10,3 +10,4 @@ Makefile.in
 missing
 **/*.cache/**
 depcomp
+build/
