@@ -1,3 +1,14 @@
+/**
+ * @file main.cpp
+ *
+ * @brief Main file for light array control 
+ * @ingroup Oscillot
+ *
+ * @author Tim Barlow
+ *         timothy.barlow@singluariti.co
+ *
+ */
+
 
 #include "ethercat.h"
 
