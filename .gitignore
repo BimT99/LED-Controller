@@ -11,3 +11,5 @@ missing
 **/*.cache/**
 depcomp
 build/
+latex/
+html/
