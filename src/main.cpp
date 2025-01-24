@@ -11,7 +11,8 @@
 
 
 #include "ethercat.h"
-
+#include "EL2574.hpp"
+#include "ethercat_controller.hpp"
 #include <iostream>
 
 int main(int argc, char **argv) {
@@ -19,10 +20,46 @@ int main(int argc, char **argv) {
     ec_find_adapters();
     std::cout << "Hello World" << std::endl;
     return 0;
-    // Load Yaml Config file
-    // Initialize controller (EthercatController.cpp)
-    // Loop over slaves 
-        // Initialize slave functions (EL2754.CPP)
-    // Load Images to display on array 
-    // Run images on a loop to play looping video
+
+
+    /// TODO (Tim Barlow): Get rid of all magic numbers and strings
+
+    // Initialise SOEM, bind socket to interface
+    if (!ec_init("enx7cc2c649b50c")) {
+        // On Failed binding to interface 
+        std::cout << "EC INIT FAILED...EXITING" << std::endl;
+        exit(EXIT_FAILURE);
+    } 
+    // Successfuly binded to interface 
+    std::cout << "EC INIT SUCCEEDED" << std::endl;
+
+    // Configure slaves
+    // Use config table = false
+    if (ec_config_init(FALSE) > 0) {
+        std::cout << "Slaves found: " << ec_slavecount << std::endl;
+    }
+
+    // Wait for all slaves to reach SAFE_OP State
+    ec_statecheck(0,EC_STATE_SAFE_OP, EC_TIMEOUTSTATE);
+
+    // Loop through available slaves and configure if slave is EL2574
+    // For each active slave create 
+    for (int i = 1; i <= ec_slavecount; i++) {
+        // Check if slave is EL2574
+        if (!is_EL2574(ec_slave[i].name)) {
+            // Report slave is not 2574 and skip loop
+            std::cout << "Slave is not EL2574" << std::endl;
+            continue;
+        }
+        // If is EL2574, configure and create buffer for IO 
+        if (!configure_EL2574()) {
+            std::cout << "Could not configure slave: " 
+                << i 
+                << "Exiting..." << std::endl;
+                exit(EXIT_FAILURE);
+        }
+        // Successful configuration of slave
+        std::cout << "configured slave: " << i << std::endl;
+
+    }
 }

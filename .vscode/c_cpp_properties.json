@@ -6,7 +6,8 @@
                 "${workspaceFolder}/**",
                 "${workspaceFolder}/SOEM/soem",
                 "${workspaceFolder}/SOEM/osal/linux",
-                "${workspaceFolder}/SOEM/oshw/linux"
+                "${workspaceFolder}/SOEM/oshw/linux",
+                "${workspaceFolder}/SOEM/test/linux/ebox"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/clang",
