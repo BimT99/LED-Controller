@@ -86,16 +86,11 @@
 
 
 /// Used for true and false for SDO 
-uint8_t _true = (1);
-uint8_t _false = (0);
 
 
 /* String Defs */
 /// EL2574 Name String
 #define EL2574_STR "EL2574"
-
-/* Variables and Data Structures */
-uint8_t pixel_buffer  [GRID_DIMENSION][GRID_DIMENSION];
 
 /// @brief Stores EL2574 custom settings confs
 ///        see page 138 of documentation
@@ -177,4 +172,4 @@ int EL2574_send_frame_buffer(int slave, int channel);
 /// @brief Sends checkerboard grid to light array
 /// @param grid_size length/width of pixels on square grid
 /// @return 1 if succesful, 0 if not
-int EL2574_checker_board(int width, int length);
+int EL2574_checker_board(int slave, int channel, int segments);

@@ -80,6 +80,9 @@ int configure_EL2574(int slave) {
 int EL2574_write_index(int slave, int channel, int index, uint32_t* element_ptr) {
   // Variable to hold channel index
   int ch_indx;
+  uint8_t _true = (1);
+  uint8_t _false = (0);
+
   // Switch statement to get correct channel index
   switch(channel) {
     case 0: 
@@ -137,6 +140,9 @@ int EL2574_write_index(int slave, int channel, int index, uint32_t* element_ptr)
 int EL2574_update_frame_buffer(int slave, int channel) {
   // Variable for tracking channel index
   int ch_indx;
+  uint8_t _true = (1);
+  uint8_t _false = (0);
+
   // Switch statement to get correct channel index
   switch(channel) {
     case 0: 
@@ -170,6 +176,9 @@ int EL2574_update_frame_buffer(int slave, int channel) {
 int EL2574_send_frame_buffer(int slave, int channel) {
    // Variable for tracking channel index
   int ch_indx;
+  uint8_t _true = (1);
+  uint8_t _false = (0);
+
   // Switch statement to get correct channel index
   switch(channel) {
     case 0: 

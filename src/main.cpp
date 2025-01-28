@@ -67,14 +67,17 @@ int main(int argc, char **argv) {
 
     // For all Slave modules, do a 8x32 checkerboard pattern
     for (int i = 1; i <= ec_slavecount; i++) {
-        if (!EL2574_checker_board(i,GRID_DIMENSION)) {
-            std::cout << "Could not print checker board for module:"
+        // TODO (TIM): Magic number
+        if (i == 4) {
+            if (!EL2574_checker_board(i,0,GRID_DIMENSION)) {
+                std::cout << "Could not print checker board for module:"
                 << i 
                 << "Exiting..."
                 << std::endl;
                 exit(EXIT_FAILURE);
         } else {
             std::cout << "Printing CheckerBoard..." << std::endl;
+        }
         }
     }
 
