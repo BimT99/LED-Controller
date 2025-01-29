@@ -19,6 +19,48 @@
 
 char IOmap[4096];
 
+void print_slave_states(std::string msg) {
+  /* read individual slave state and store in ec_slave[] */
+  ec_readstate();
+  printf("States at: %s\n", msg.c_str());
+  for (int i = 0; i <= ec_slavecount ; i++) {\
+    // printf("Slave %d State=0x%2.2x %s, StatusCode=0x%4.4x : %s\n",
+    //   i, ec_slave[i].state, state_to_string(ec_slave[i].state).c_str(),
+    //   ec_slave[i].ALstatuscode,
+    //   ec_ALstatuscode2string(ec_slave[i].ALstatuscode));
+    printf("Slave %d State=%s, StatusCode=%s\n",
+      i, state_to_string(ec_slave[i].state).c_str(),
+      ec_ALstatuscode2string(ec_slave[i].ALstatuscode));
+  }
+}
+
+std::string state_to_string(uint16 state) {
+  std::string err = (state & 0xF0)?"ERROR+":"";
+  switch (state & 0x0F) {
+  case EC_STATE_NONE:
+    return err+"NONE";
+    break;
+  case EC_STATE_INIT:
+    return err+"INIT";
+    break;
+  case EC_STATE_PRE_OP:
+    return err+"PRE_OP";
+    break;
+  case EC_STATE_BOOT:
+    return err+"BOOT";
+    break;
+  case EC_STATE_SAFE_OP:
+    return err+"SAFE_OP";
+    break;
+  case EC_STATE_OPERATIONAL:
+    return err+"OPERATIONAL";
+    break;
+  default:
+    return std::string("state?: ") + std::to_string(state);
+    break;
+  }
+}
+
 int main(int argc, char **argv) {
 
     std::cout << "Hello World" << std::endl;
@@ -73,7 +115,7 @@ int main(int argc, char **argv) {
     ec_readstate();
     ec_send_processdata();
     ec_receive_processdata(EC_TIMEOUTRET);
-    std::cout << "State t0 =" << ec_slave[el2574_slave].state << std::endl;
+    std::cout << "State t0 = " << ec_slave[el2574_slave].state << std::endl;
     ec_slave[el2574_slave].state = EC_STATE_OPERATIONAL;
     /* request OP state for all slaves */
     ec_writestate(el2574_slave);
