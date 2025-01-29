@@ -2,7 +2,7 @@
  * @file main.cpp
  *
  * @brief Main file for light array control 
- * @ingroup Oscillot
+ * @ingroup 
  *
  * @author Tim Barlow
  *         timothy.barlow@singluariti.co
@@ -14,13 +14,13 @@
 #include "EL2574.hpp"
 #include "ethercat_controller.hpp"
 #include <iostream>
+#include <unistd.h>
 
 
 char IOmap[4096];
 
 int main(int argc, char **argv) {
-    int a = 0;
-    ec_find_adapters();
+
     std::cout << "Hello World" << std::endl;
 
     /// TODO (Tim Barlow): Get rid of all magic numbers and strings
@@ -42,8 +42,12 @@ int main(int argc, char **argv) {
 
     ec_config_map(&IOmap);
 
+    ec_configdc();
+
     // Wait for all slaves to reach SAFE_OP State
     ec_statecheck(0,EC_STATE_SAFE_OP, EC_TIMEOUTSTATE);
+
+    int el2574_slave = 0;
 
     // Loop through available slaves and configure if slave is EL2574
     // For each active slave create 
@@ -62,24 +66,46 @@ int main(int argc, char **argv) {
                 exit(EXIT_FAILURE);
         }
         // Successful configuration of slave
-        std::cout << "configured slave: " << i << std::endl;
+        std::cout << "configured  EL2574 slave: " << i << std::endl;
+        el2574_slave = i;
     }
 
+    ec_readstate();
+    ec_send_processdata();
+    ec_receive_processdata(EC_TIMEOUTRET);
+    std::cout << "State t0 =" << ec_slave[el2574_slave].state << std::endl;
+    ec_slave[el2574_slave].state = EC_STATE_OPERATIONAL;
+    /* request OP state for all slaves */
+    ec_writestate(el2574_slave);
+    sleep(2);
+    /* wait for all slaves to reach OP state */
+    ec_statecheck(el2574_slave, EC_STATE_OPERATIONAL,  EC_TIMEOUTSTATE);
+   
+
+    if (ec_slave[el2574_slave].state != EC_STATE_OPERATIONAL) {
+        std::cout << "Slave states not all operational \n"
+                << "Slave State: "
+                << ec_slave[el2574_slave].state
+                << "\n Exiting..."
+                << std::endl;
+        exit(EXIT_FAILURE);
+    }
     // For all Slave modules, do a 8x32 checkerboard pattern
     for (int i = 1; i <= ec_slavecount; i++) {
         // TODO (TIM): Magic number
-        if (i == 4) {
-            if (!EL2574_checker_board(i,0,GRID_DIMENSION)) {
-                std::cout << "Could not print checker board for module:"
-                << i 
-                << "Exiting..."
-                << std::endl;
-                exit(EXIT_FAILURE);
-        } else {
-            std::cout << "Printing CheckerBoard..." << std::endl;
+        if (i == el2574_slave) {
+            for (int i = 0; i < 10; i++) {
+                sleep(2);
+                if (!EL2574_checker_board(i,0,GRID_DIMENSION)) {
+                    std::cout << "Could not print checker board for module:"
+                    << i 
+                    << "Exiting..."
+                    << std::endl;
+                    exit(EXIT_FAILURE);
+                } else {
+                std::cout << "Printing CheckerBoard..." << std::endl;
+                }
+            }
         }
-        }
-    }
-
-    
+    }  
 }

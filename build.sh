@@ -20,6 +20,7 @@ g++ -c \
 
 g++ ./build/main.a ./build/EL2574.a \
     -LSOEM/build -lsoem \
+    -pthread \
     -o ./build/run
 
 rm ./build/main.a

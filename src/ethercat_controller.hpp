@@ -5,7 +5,7 @@
  *        relevant to the use and of the ethercat controller for driving 
  *        of beckhoff modules.
  *
- * @ingroup Oscillot
+ * @ingroup 
  *
  * @author Tim Barlow
  *         timothy.barlow@singulariti.co

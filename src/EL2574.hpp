@@ -6,7 +6,7 @@
  *        Technical Documentation related to TC module can be found here:
  *        https://download.beckhoff.com/download/document/io/ethercat-terminals/el2574en.pdf
  *
- * @ingroup Oscillot
+ * @ingroup 
  *
  * @author Tim Barlow
  *         timothy.barlow@singluariti.co
@@ -40,43 +40,43 @@
 /* Sub-Indexes */
 
 /// Enable Custom Settings
-#define EL2574_ENABLE_CTM_STGS          (1)
+#define EL2574_ENABLE_CTM_STGS          (0x01)
 /// Number Pixels
-#define EL2574_NUM_PIXELS               (11)
+#define EL2574_NUM_PIXELS               (0x11)
 /// Chip Type
-#define EL2575_CHIP_TYPE                (12)
+#define EL2575_CHIP_TYPE                (0x12)
 /// Color Format (See Docs pg 137)
-#define EL2574_CLR_FMT                  (13)
+#define EL2574_CLR_FMT                  (0x13)
 /// Custom Data Rate
-#define EL2574_CTM_DATA_RATE            (15)
+#define EL2574_CTM_DATA_RATE            (0x15)
 
 
 /// Execute sub-index
-#define EL2574_EXTD_CTRL_EXECUTE_SIDX   (1)
+#define EL2574_EXTD_CTRL_EXECUTE_SIDX   (0x01)
 /// Send sub-index
-#define EL2574_EXTD_CTRL_SEND_SIDX      (2)
+#define EL2574_EXTD_CTRL_SEND_SIDX      (0x02)
 /// Update sub-index
-#define EL2574_EXTD_CTRL_UPDATE_SIDXX   (3)
+#define EL2574_EXTD_CTRL_UPDATE_SIDXX   (0x03)
 /// Write sub-index
-#define EL2574_EXTD_CTRL_WRITE_SIDXX    (4)
+#define EL2574_EXTD_CTRL_WRITE_SIDXX    (0x04)
 /// LED Index sub-index
-#define EL2574_EXTD_CTRL_IDX_SIDX       (9)
+#define EL2574_EXTD_CTRL_IDX_SIDX       (0x09)
 /// Segment Element 0 Sub-Index
-#define EL2574_EXTD_CTRL_SEG_ELE_0_SIDX (11)
+#define EL2574_EXTD_CTRL_SEG_ELE_0_SIDX (0x11)
 /// Segment Element 1 Sub-Index
-#define EL2574_EXTD_CTRL_SEG_ELE_1_SIDX (12)
+#define EL2574_EXTD_CTRL_SEG_ELE_1_SIDX (0x12)
 /// Segment Element 2 Sub-Index
-#define EL2574_EXTD_CTRL_SEG_ELE_2_SIDX (13)
+#define EL2574_EXTD_CTRL_SEG_ELE_2_SIDX (0x13)
 /// Segment Element 3 Sub-Index
-#define EL2574_EXTD_CTRL_SEG_ELE_3_SIDX (14)
+#define EL2574_EXTD_CTRL_SEG_ELE_3_SIDX (0x14)
 /// Segment Element 4 Sub-Index
-#define EL2574_EXTD_CTRL_SEG_ELE_4_SIDX (15)
+#define EL2574_EXTD_CTRL_SEG_ELE_4_SIDX (0x15)
 /// Segment Element 5 Sub-Index
-#define EL2574_EXTD_CTRL_SEG_ELE_5_SIDX (16)
+#define EL2574_EXTD_CTRL_SEG_ELE_5_SIDX (0x16)
 /// Segment Element 6 Sub-Index
-#define EL2574_EXTD_CTRL_SEG_ELE_6_SIDX (17)
+#define EL2574_EXTD_CTRL_SEG_ELE_6_SIDX (0x17)
 /// Segment Element 7 Sub-Index
-#define EL2574_EXTD_CTRL_SEG_ELE_7_SIDX (18)
+#define EL2574_EXTD_CTRL_SEG_ELE_7_SIDX (0x18)
 
 /* Magic Number Defs */
 /// Size of grid (DIMENSIONxDIMENSION)
@@ -97,6 +97,8 @@
 typedef struct PACKED
 {
     /* data */
+
+    //TODO(TIM BARLOW): Fix magic numbers
     uint8_t enbl_cust_stgs = 1;
     uint16_t num_pixels = 256;
     uint8_t chip_type = 28;

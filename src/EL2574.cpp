@@ -6,7 +6,7 @@
  *        Technical Documentation related to TC module can be found here:
  *        https://download.beckhoff.com/download/document/io/ethercat-terminals/el2574en.pdf
  *
- * @ingroup Oscillot
+ * @ingroup
  *
  * @author Tim Barlow
  *         timothy.barlow@singluariti.co
@@ -18,7 +18,7 @@
 
 int is_EL2574(char* name) {
   return strncmp(name,
-          EL2574_STR, sizeof(EL2574_STR)/(sizeof(char)-1) == 0);
+          EL2574_STR, (sizeof(EL2574_STR)/sizeof(char)-1)) == 0;
 }
 
 int configure_EL2574(int slave) {
@@ -44,34 +44,34 @@ int configure_EL2574(int slave) {
           continue;
       }
       ec_SDOwrite(slave, ch_indx,
-      EL2574_ENABLE_CTM_STGS , FALSE,
-      sizeof(confs.ch0_confs.enbl_cust_stgs),
-      &(ch_confs.enbl_cust_stgs),
-      EC_TIMEOUTRXM);
+        EL2574_ENABLE_CTM_STGS , FALSE,
+        sizeof(confs.ch0_confs.enbl_cust_stgs),
+        &(ch_confs.enbl_cust_stgs),
+        EC_TIMEOUTRXM);
 
       ec_SDOwrite(slave, ch_indx,
-      EL2574_ENABLE_CTM_STGS , FALSE,
-      sizeof(confs.ch0_confs.num_pixels),
-      &(ch_confs.num_pixels),
-      EC_TIMEOUTRXM);
+        EL2574_ENABLE_CTM_STGS , FALSE,
+        sizeof(confs.ch0_confs.num_pixels),
+        &(ch_confs.num_pixels),
+        EC_TIMEOUTRXM);
 
       ec_SDOwrite(slave, ch_indx,
-      EL2574_ENABLE_CTM_STGS , FALSE,
-      sizeof(confs.ch0_confs.chip_type),
-      &(ch_confs.chip_type),
-      EC_TIMEOUTRXM);
+        EL2574_ENABLE_CTM_STGS , FALSE,
+        sizeof(confs.ch0_confs.chip_type),
+        &(ch_confs.chip_type),
+        EC_TIMEOUTRXM);
 
       ec_SDOwrite(slave, ch_indx,
-      EL2574_ENABLE_CTM_STGS , FALSE,
-      sizeof(confs.ch0_confs.color_format),
-      &(ch_confs.color_format),
-      EC_TIMEOUTRXM);
+        EL2574_ENABLE_CTM_STGS , FALSE,
+        sizeof(confs.ch0_confs.color_format),
+        &(ch_confs.color_format),
+        EC_TIMEOUTRXM);
 
       ec_SDOwrite(slave, ch_indx,
-      EL2574_ENABLE_CTM_STGS , FALSE,
-      sizeof(confs.ch0_confs.data_rate),
-      &(ch_confs.data_rate),
-      EC_TIMEOUTRXM);
+        EL2574_ENABLE_CTM_STGS , FALSE,
+        sizeof(confs.ch0_confs.data_rate),
+        &(ch_confs.data_rate),
+        EC_TIMEOUTRXM);
     }
 
     return TRUE;
@@ -171,6 +171,8 @@ int EL2574_update_frame_buffer(int slave, int channel) {
     EL2574_EXTD_CTRL_UPDATE_SIDXX, FALSE,
     sizeof(_true), &_true,
     EC_TIMEOUTRXM);
+
+  return TRUE;
 }
 
 int EL2574_send_frame_buffer(int slave, int channel) {
@@ -207,6 +209,8 @@ int EL2574_send_frame_buffer(int slave, int channel) {
     EL2574_EXTD_CTRL_SEND_SIDX, FALSE,
     sizeof(_true), &_true,
     EC_TIMEOUTRXM);
+
+  return TRUE;
 }
 
 int EL2574_checker_board(int slave, int channel, int segments) {
@@ -227,4 +231,6 @@ int EL2574_checker_board(int slave, int channel, int segments) {
   // Update and send frame buffer
   EL2574_update_frame_buffer(slave,channel);
   EL2574_send_frame_buffer(slave,channel);
+
+  return TRUE;
 }
