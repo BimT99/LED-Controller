@@ -16,9 +16,9 @@
             "label": "build",
             "type": "shell",
             "options": {
-                "cwd": "${workspaceFolder}/src/"
+                "cwd": "${workspaceFolder}/"
             },
-            "command": "make",
+            "command": "./build.sh",
             "problemMatcher": [
                 "$gcc"
             ]

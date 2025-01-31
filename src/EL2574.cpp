@@ -18,63 +18,114 @@
 
 int is_EL2574(char* name) {
   return strncmp(name,
-          EL2574_STR, (sizeof(EL2574_STR)/sizeof(char)-1)) == 0;
+          EL2574_STR, (sizeof(EL2574_STR)/sizeof(char))-1 ) == 0;
 }
 
 int configure_EL2574(int slave) {
-    EL2574_module_confs confs;
-    EL2574_ch_confs ch_confs;
-    int ch_indx;
+  EL2574_module_confs confs;
+  EL2574_ch_confs ch_confs;
+  int ch_indx;
 
-    for (int i = 0; i < 4; i++) {
-      switch (i){
-        case 0: 
-          ch_indx = EL2574_STGS_CH0;
-          break;
-        case 1:
-          ch_indx = EL2574_STGS_CH1;
-          break;
-        case 2:
-          ch_indx = EL2574_STGS_CH2;
-          break;
-        case 3:
-          ch_indx = EL2574_STGS_CH3;
-          break;
-        default:
-          continue;
-      }
-      ec_SDOwrite(slave, ch_indx,
-        EL2574_ENABLE_CTM_STGS , FALSE,
-        sizeof(confs.ch0_confs.enbl_cust_stgs),
-        &(ch_confs.enbl_cust_stgs),
-        EC_TIMEOUTRXM);
+  for (int i = 0; i < 4; i++) {
+    switch (i){
+      case 0: 
+        ch_indx = EL2574_STGS_CH0;
+        break;
+      case 1:
+        ch_indx = EL2574_STGS_CH1;
+        break;
+      case 2:
+        ch_indx = EL2574_STGS_CH2;
+        break;
+      case 3:
+        ch_indx = EL2574_STGS_CH3;
+        break;
+      default:
+        // TODO: not this
+        continue;
+    }
 
+    ec_SDOwrite(slave, ch_indx,
+      EL2574_ENABLE_CTM_STGS , FALSE,
+      sizeof(confs.ch0_confs.enbl_cust_stgs),
+      &(ch_confs.enbl_cust_stgs),
+      EC_TIMEOUTRXM);
+
+    if(confs.ch0_confs.enbl_cust_stgs == 1) {
+
+      std::cout << "setting custom settings..." << std::endl;
       ec_SDOwrite(slave, ch_indx,
-        EL2574_ENABLE_CTM_STGS , FALSE,
+        EL2574_NUM_PIXELS , FALSE,
         sizeof(confs.ch0_confs.num_pixels),
         &(ch_confs.num_pixels),
         EC_TIMEOUTRXM);
 
       ec_SDOwrite(slave, ch_indx,
-        EL2574_ENABLE_CTM_STGS , FALSE,
+        EL2575_CHIP_TYPE , FALSE,
         sizeof(confs.ch0_confs.chip_type),
         &(ch_confs.chip_type),
         EC_TIMEOUTRXM);
 
       ec_SDOwrite(slave, ch_indx,
-        EL2574_ENABLE_CTM_STGS , FALSE,
+        EL2574_CLR_FMT , FALSE,
         sizeof(confs.ch0_confs.color_format),
         &(ch_confs.color_format),
         EC_TIMEOUTRXM);
 
       ec_SDOwrite(slave, ch_indx,
-        EL2574_ENABLE_CTM_STGS , FALSE,
+        EL2574_CTM_DATA_RATE , FALSE,
         sizeof(confs.ch0_confs.data_rate),
         &(ch_confs.data_rate),
         EC_TIMEOUTRXM);
     }
+  }
 
-    return TRUE;
+
+  /// @brief TxPDO is at most 1+4 uint16s
+  uint16_t txpdo_assign[TxPDO_SZ_ENTRY + 0+0*EL2574_TxPDO_MAX_SZ];
+  uint16_t* txpdo_assign_ptr = &(txpdo_assign[0]);
+
+  // store size in entry 0
+  // [ (page 146) initially set subindex 0 to 0
+  // and at the end to the number of entered values.]
+  //*(txpdo_assign_ptr++) = 1+0*EL2574_TxPDO_MAX_SZ;
+  *(txpdo_assign_ptr++) = EL2574_TxPDO_SUB_STS_CH0;
+  //*(txpdo_assign_ptr++) = EL2574_TxPDO_SUB_STS_CH1;
+  //*(txpdo_assign_ptr++) = EL2574_TxPDO_SUB_STS_CH2;
+  //*(txpdo_assign_ptr++) = EL2574_TxPDO_SUB_STS_CH3;
+
+  uint16_t odata=(0x1A00);
+
+  // Initialise TxPDO by passing pointer to buffer of max RxPDO size
+  ec_SDOwrite(slave, EL2574_TxPDO_IDX,
+    ECT_SDO_SUB_ZERO, TRUE,
+    sizeof(txpdo_assign),txpdo_assign,EC_TIMEOUTRXM);
+  //ec_SDOwrite(slave, EL2574_TxPDO_IDX,
+  //  ECT_SDO_SUB_ZERO+1, FALSE,
+  //  sizeof(odata),&odata,EC_TIMEOUTRXM);
+
+  /// @brief RxPDO is at most 1+4 uint16s
+  uint16_t rxpdo_assign[RxPDO_SZ_ENTRY + EL2574_RxPDO_MAX_SZ];
+  uint16_t* rxpdo_assign_ptr = &(rxpdo_assign[0]);
+
+  // *(rxpdo_assign_ptr++) = EL2574_RxPDO_MAX_SZ;
+  *(rxpdo_assign_ptr++) = EL2574_RxPDO_SUB_EXT_CH0;
+  *(rxpdo_assign_ptr++) = EL2574_RxPDO_SUB_EXT_CH1;
+  *(rxpdo_assign_ptr++) = EL2574_RxPDO_SUB_EXT_CH2;
+  *(rxpdo_assign_ptr++) = EL2574_RxPDO_SUB_EXT_CH3;
+
+  uint16_t idata=(0x1600);
+
+
+  // Initialise RxPDO by passing pointer to buffer of max RxPDO size
+  //ec_SDOwrite(slave, EL2574_RxPDO_IDX,
+  //  ECT_SDO_SUB_ZERO, TRUE,
+  //  4*sizeof(uint16_t),rxpdo_assign,EC_TIMEOUTRXM);
+  ec_SDOwrite(slave, EL2574_RxPDO_IDX,
+    ECT_SDO_SUB_ZERO+1, FALSE,
+    sizeof(idata),&idata,EC_TIMEOUTRXM);
+
+  return TRUE;
 }
 
 int EL2574_write_index(int slave, int channel, int index, uint32_t* element_ptr) {

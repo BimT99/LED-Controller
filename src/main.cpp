@@ -17,23 +17,122 @@
 #include <unistd.h>
 
 
-char IOmap[4096];
 
-void print_slave_states(std::string msg) {
-  /* read individual slave state and store in ec_slave[] */
-  ec_readstate();
-  printf("States at: %s\n", msg.c_str());
-  for (int i = 0; i <= ec_slavecount ; i++) {\
-    // printf("Slave %d State=0x%2.2x %s, StatusCode=0x%4.4x : %s\n",
-    //   i, ec_slave[i].state, state_to_string(ec_slave[i].state).c_str(),
-    //   ec_slave[i].ALstatuscode,
-    //   ec_ALstatuscode2string(ec_slave[i].ALstatuscode));
-    printf("Slave %d State=%s, StatusCode=%s\n",
-      i, state_to_string(ec_slave[i].state).c_str(),
-      ec_ALstatuscode2string(ec_slave[i].ALstatuscode));
+// Helper Methods
+std::string state_to_string(uint16 state);
+void print_slave_states(std::string msg);
+
+// Start Main, TODO (Tim Barlow): Get rid of all magic numbers and strings
+int main(int argc, char **argv) {
+
+  // Initialise SOEM, bind socket to interface
+  if (!ec_init("enx7cc2c649b50c")) {
+        // On Failed binding to interface 
+        std::cout << "EC INIT FAILED...EXITING" << std::endl;
+        exit(EXIT_FAILURE);
+  } 
+
+  // Configure slaves
+  // Use config table = false
+  if (ec_config_init(FALSE) > 0) {
+      std::cout << "Slaves found: " << ec_slavecount << std::endl;
   }
-}
 
+  int el2574_slave = 0;
+
+  // Loop through available slaves and configure if slave is EL2574
+  // For each active slave create 
+  ec_slave[0].state = EC_STATE_PRE_OP;
+  ec_writestate(0);
+  ec_statecheck(0,EC_STATE_PRE_OP,EC_TIMEOUTRET);
+  print_slave_states("Pre-Config");
+  
+  for (int i = 1; i <= ec_slavecount; i++) {
+      // Check if slave is EL2574
+      if (!is_EL2574(ec_slave[i].name)) {
+          // Report slave is not 2574 and skip loop
+          std::cout << "Slave is not EL2574" << std::endl;
+          continue;
+      }
+      // If is EL2574, configure and create buffer for IO 
+      if (!configure_EL2574(i)) {
+          std::cout << "Could not configure slave: " 
+              << i 
+              << "Exiting..." << std::endl;
+              exit(EXIT_FAILURE);
+      }
+      // Successful configuration of slave
+      std::cout << "configured  EL2574 slave: " << i << std::endl;
+      el2574_slave = i;
+  }
+
+  char IOmap[4096];
+
+  std::cout <<  "ec_config_map(&IOmap);" << std::endl;
+  ec_config_map(&IOmap);
+  ec_configdc();
+
+  for (int i = 1; i <= ec_slavecount; i++) {
+    std::cout << "Slave: " << i
+              << " State: "
+              << ec_ALstatuscode2string(ec_slave[i].ALstatuscode)
+              << std::endl;
+  }
+  
+  // ec_slave[ALL_SLAVES].state = EC_STATE_INIT;
+  ec_slave[ALL_SLAVES].state = EC_STATE_PRE_OP;
+  /* request SAFE-OP state for all slaves */
+  ec_writestate(ALL_SLAVES);
+
+  // Wait for EL2574 slaves to reach SAFE_OP State
+  ec_statecheck(el2574_slave,EC_STATE_PRE_OP, EC_TIMEOUTSTATE);
+  ec_readstate();
+
+  // Send and recieve one data cycle to init SM in slaves
+  ec_send_processdata();
+  ec_receive_processdata(EC_TIMEOUTRET);
+
+  print_slave_states("Before setting state");
+
+  ec_slave[0].state = EC_STATE_OPERATIONAL;
+  
+  /* request OP state for all slaves */
+  ec_writestate(0);
+  print_slave_states("After Writing state");
+  /* wait for all slaves to reach OP state */
+  ec_statecheck(el2574_slave, EC_STATE_OPERATIONAL,  EC_TIMEOUTSTATE);
+  print_slave_states("After Statecheck");
+
+  if (ec_slave[el2574_slave].state != EC_STATE_OPERATIONAL) {
+      std::cout << "Slave states not all operational \n"
+              << "Slave State: "
+              << ec_slave[el2574_slave].state
+              << "\n Exiting..."
+              << std::endl;
+      exit(EXIT_FAILURE);
+  }
+  // For all Slave modules, do a 8x32 checkerboard pattern
+  for (int i = 1; i <= ec_slavecount; i++) {
+    // TODO (TIM): Magic number
+    if (i == el2574_slave) {
+        for (int i = 0; i < 10; i++) {
+            sleep(2);
+            if (!EL2574_checker_board(i,0,GRID_DIMENSION)) {
+                std::cout << "Could not print checker board for module:"
+                << i 
+                << "Exiting..."
+                << std::endl;
+                exit(EXIT_FAILURE);
+            } else {
+            std::cout << "Printing CheckerBoard..." << std::endl;
+            }
+      }
+    }
+  }  
+}
+// End Main
+
+// Helper Method definitions
 std::string state_to_string(uint16 state) {
   std::string err = (state & 0xF0)?"ERROR+":"";
   switch (state & 0x0F) {
@@ -61,93 +160,14 @@ std::string state_to_string(uint16 state) {
   }
 }
 
-int main(int argc, char **argv) {
-
-    std::cout << "Hello World" << std::endl;
-
-    /// TODO (Tim Barlow): Get rid of all magic numbers and strings
-
-    // Initialise SOEM, bind socket to interface
-   if (!ec_init("enx7cc2c649b50c")) {
-        // On Failed binding to interface 
-        std::cout << "EC INIT FAILED...EXITING" << std::endl;
-        exit(EXIT_FAILURE);
-    } 
-    // Successfuly binded to interface 
-    std::cout << "EC INIT SUCCEEDED" << std::endl;
-
-    // Configure slaves
-    // Use config table = false
-    if (ec_config_init(FALSE) > 0) {
-        std::cout << "Slaves found: " << ec_slavecount << std::endl;
-    }
-
-    ec_config_map(&IOmap);
-
-    ec_configdc();
-
-    // Wait for all slaves to reach SAFE_OP State
-    ec_statecheck(0,EC_STATE_SAFE_OP, EC_TIMEOUTSTATE);
-
-    int el2574_slave = 0;
-
-    // Loop through available slaves and configure if slave is EL2574
-    // For each active slave create 
-    for (int i = 1; i <= ec_slavecount; i++) {
-        // Check if slave is EL2574
-        if (!is_EL2574(ec_slave[i].name)) {
-            // Report slave is not 2574 and skip loop
-            std::cout << "Slave is not EL2574" << std::endl;
-            continue;
-        }
-        // If is EL2574, configure and create buffer for IO 
-        if (!configure_EL2574(i)) {
-            std::cout << "Could not configure slave: " 
-                << i 
-                << "Exiting..." << std::endl;
-                exit(EXIT_FAILURE);
-        }
-        // Successful configuration of slave
-        std::cout << "configured  EL2574 slave: " << i << std::endl;
-        el2574_slave = i;
-    }
-
-    ec_readstate();
-    ec_send_processdata();
-    ec_receive_processdata(EC_TIMEOUTRET);
-    std::cout << "State t0 = " << ec_slave[el2574_slave].state << std::endl;
-    ec_slave[el2574_slave].state = EC_STATE_OPERATIONAL;
-    /* request OP state for all slaves */
-    ec_writestate(el2574_slave);
-    sleep(2);
-    /* wait for all slaves to reach OP state */
-    ec_statecheck(el2574_slave, EC_STATE_OPERATIONAL,  EC_TIMEOUTSTATE);
-   
-
-    if (ec_slave[el2574_slave].state != EC_STATE_OPERATIONAL) {
-        std::cout << "Slave states not all operational \n"
-                << "Slave State: "
-                << ec_slave[el2574_slave].state
-                << "\n Exiting..."
-                << std::endl;
-        exit(EXIT_FAILURE);
-    }
-    // For all Slave modules, do a 8x32 checkerboard pattern
-    for (int i = 1; i <= ec_slavecount; i++) {
-        // TODO (TIM): Magic number
-        if (i == el2574_slave) {
-            for (int i = 0; i < 10; i++) {
-                sleep(2);
-                if (!EL2574_checker_board(i,0,GRID_DIMENSION)) {
-                    std::cout << "Could not print checker board for module:"
-                    << i 
-                    << "Exiting..."
-                    << std::endl;
-                    exit(EXIT_FAILURE);
-                } else {
-                std::cout << "Printing CheckerBoard..." << std::endl;
-                }
-            }
-        }
-    }  
+void print_slave_states(std::string location_msg) {
+ for (int i = 0; i <= ec_slavecount; i++) {
+    std::cout << "Slave: " << i
+              << " - Location: " << location_msg
+              << " - State: " << ec_slave[i].state
+              << " - Status: "
+              << ec_ALstatuscode2string(ec_slave[i].ALstatuscode)
+              << std::endl;
+  }
 }
+

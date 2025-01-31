@@ -15,6 +15,7 @@
 
 
 #include <stdio.h>
+#include <iostream>
 #include <string.h>
 #include <cstdint>
 #include "ethercat.h"
@@ -37,7 +38,16 @@
 /// Settings channel 3 index
 #define EL2574_STGS_CH3                 (0x8030)
 
+/// RxPDO Index
+#define EL2574_RxPDO_IDX                (0x1c12)
+/// TxPDO index
+#define EL2574_TxPDO_IDX                (0x1c13)
+
+
+
 /* Sub-Indexes */
+
+#define ECT_SDO_SUB_ZERO                (0x00)
 
 /// Enable Custom Settings
 #define EL2574_ENABLE_CTM_STGS          (0x01)
@@ -50,6 +60,10 @@
 /// Custom Data Rate
 #define EL2574_CTM_DATA_RATE            (0x15)
 
+/// Sub Index for reprogramming RxPDO
+#define EL2574_RxPDO_SUB_IDX            (0x01)
+/// Sub Index for reprogramming TxPDO
+#define EL2574_TxPDO_SUB_IDX            (0x01)
 
 /// Execute sub-index
 #define EL2574_EXTD_CTRL_EXECUTE_SIDX   (0x01)
@@ -82,10 +96,28 @@
 /// Size of grid (DIMENSIONxDIMENSION)
 #define GRID_DIMENSION                  (32)
 /// Number of elements per LED segment
-#define SEGM_SIZE                      (8)
+#define SEGM_SIZE                       (8)
+/// For SOEM library, 'all slaves' represented by zero in soem methods
+#define ALL_SLAVES                      (0)
+/// amount of uint16s used to store txpdo size
 
+// See manual page 122
+#define TxPDO_SZ_ENTRY                  (1)
+/// amount of uint16s in txpdo
+#define EL2574_TxPDO_MAX_SZ             (4)
+#define EL2574_TxPDO_SUB_STS_CH0        (0x1A00)
+#define EL2574_TxPDO_SUB_STS_CH1        (0x1A10)
+#define EL2574_TxPDO_SUB_STS_CH2        (0x1A20)
+#define EL2574_TxPDO_SUB_STS_CH3        (0x1A30)
 
-/// Used for true and false for SDO 
+/// amount of uint16s used to store rxpdo size
+#define RxPDO_SZ_ENTRY                  (1)
+/// amount of uint16s in rxpdo
+#define EL2574_RxPDO_MAX_SZ             (4)
+#define EL2574_RxPDO_SUB_EXT_CH0        (0x1601)
+#define EL2574_RxPDO_SUB_EXT_CH1        (0x1611)
+#define EL2574_RxPDO_SUB_EXT_CH2        (0x1621)
+#define EL2574_RxPDO_SUB_EXT_CH3        (0x1631)
 
 
 /* String Defs */
@@ -94,16 +126,16 @@
 
 /// @brief Stores EL2574 custom settings confs
 ///        see page 138 of documentation
-typedef struct PACKED
+typedef struct
 {
     /* data */
 
     //TODO(TIM BARLOW): Fix magic numbers
-    uint8_t enbl_cust_stgs = 1;
-    uint16_t num_pixels = 256;
-    uint8_t chip_type = 28;
-    uint8_t color_format = 26;
-    uint8_t data_rate = 80;
+    uint8_t enbl_cust_stgs {1};
+    uint16_t num_pixels {256}; // def = 256
+    uint8_t chip_type {28}; // 28 = WS2812(B)
+    uint8_t color_format {26}; // 26 = RGB
+    uint8_t data_rate {80}; // 80 = 800 kbit/s
 } EL2574_ch_confs;
 
 /// @brief Stores confs for all 4 channels
