@@ -114,6 +114,7 @@
 #define RxPDO_SZ_ENTRY                  (1)
 /// amount of uint16s in rxpdo
 #define EL2574_RxPDO_MAX_SZ             (4)
+#define EL2574_RxPDO_SUB_CTRL_CH0       (0x1600)
 #define EL2574_RxPDO_SUB_EXT_CH0        (0x1601)
 #define EL2574_RxPDO_SUB_EXT_CH1        (0x1611)
 #define EL2574_RxPDO_SUB_EXT_CH2        (0x1621)
@@ -139,7 +140,7 @@ typedef struct
 } EL2574_ch_confs;
 
 /// @brief Stores confs for all 4 channels
-typedef struct PACKED
+typedef struct
 {
     EL2574_ch_confs ch0_confs;
     EL2574_ch_confs ch1_confs;
@@ -148,7 +149,7 @@ typedef struct PACKED
 } EL2574_module_confs;
 
 /// @brief Used to store values that will be passed to pixel frame buffer of EL2574
-typedef struct PACKED 
+typedef struct 
 { 
     uint8_t seg_idx;
     uint32_t ele_0;
@@ -179,9 +180,9 @@ typedef struct PACKED
 int is_EL2574(char* name);
 
 /// @brief Configures EL2574 slaves 
-/// @param confs 
+/// @param slave 
 /// @return 
-int configure_EL2574(int slave);
+int configure_EL2574(uint16_t slave);
 
 /// @brief Takes pointer to 8 elements which are written into the pixel buffer
 /// @param slave Slave number

@@ -38,15 +38,16 @@ int main(int argc, char **argv) {
       std::cout << "Slaves found: " << ec_slavecount << std::endl;
   }
 
-  int el2574_slave = 0;
-
   // Loop through available slaves and configure if slave is EL2574
   // For each active slave create 
   ec_slave[0].state = EC_STATE_PRE_OP;
   ec_writestate(0);
-  ec_statecheck(0,EC_STATE_PRE_OP,EC_TIMEOUTRET);
+  ec_statecheck(ALL_SLAVES,EC_STATE_PRE_OP,EC_TIMEOUTRET);
+
   print_slave_states("Pre-Config");
   
+  int el2574_slave = 0;
+
   for (int i = 1; i <= ec_slavecount; i++) {
       // Check if slave is EL2574
       if (!is_EL2574(ec_slave[i].name)) {
@@ -61,6 +62,10 @@ int main(int argc, char **argv) {
               << "Exiting..." << std::endl;
               exit(EXIT_FAILURE);
       }
+
+      // set PO->SO hook
+      ec_slave[i].PO2SOconfig = configure_EL2574;
+
       // Successful configuration of slave
       std::cout << "configured  EL2574 slave: " << i << std::endl;
       el2574_slave = i;
@@ -72,35 +77,44 @@ int main(int argc, char **argv) {
   ec_config_map(&IOmap);
   ec_configdc();
 
-  for (int i = 1; i <= ec_slavecount; i++) {
-    std::cout << "Slave: " << i
-              << " State: "
-              << ec_ALstatuscode2string(ec_slave[i].ALstatuscode)
-              << std::endl;
-  }
-  
+  // DEBUGS 
+  //ec_dcsync0(el2574_slave, TRUE, 4000000, 0);
+  std::cout << "RxPDO address start: " 
+            << ec_slave[el2574_slave].SM[2].StartAddr
+            << " TxPDO address start: " 
+            << ec_slave[el2574_slave].SM[3].StartAddr
+            << std::endl;
+
+  print_slave_states("Post-Config");
+
   // ec_slave[ALL_SLAVES].state = EC_STATE_INIT;
-  ec_slave[ALL_SLAVES].state = EC_STATE_PRE_OP;
+  ec_slave[ALL_SLAVES].state = EC_STATE_SAFE_OP;
   /* request SAFE-OP state for all slaves */
-  ec_writestate(ALL_SLAVES);
+  ec_writestate(ALL_SLAVES);;
 
   // Wait for EL2574 slaves to reach SAFE_OP State
-  ec_statecheck(el2574_slave,EC_STATE_PRE_OP, EC_TIMEOUTSTATE);
-  ec_readstate();
+  ec_statecheck(ALL_SLAVES, EC_STATE_SAFE_OP, EC_TIMEOUTSTATE);
+
+
+  print_slave_states("ec_statecheck(el2574_slave,EC_STATE_SAFE_OP, EC_TIMEOUTSTATE);");
 
   // Send and recieve one data cycle to init SM in slaves
-  ec_send_processdata();
-  ec_receive_processdata(EC_TIMEOUTRET);
+  //ec_send_processdata();
+  //ec_receive_processdata(EC_TIMEOUTRET);
 
-  print_slave_states("Before setting state");
+  //ec_readstate();
+  //print_slave_states("Before setting state");
 
-  ec_slave[0].state = EC_STATE_OPERATIONAL;
-  
+  ec_slave[ALL_SLAVES].state = EC_STATE_OPERATIONAL;
   /* request OP state for all slaves */
-  ec_writestate(0);
+  ec_writestate(ALL_SLAVES);
+
+  ec_statecheck(ALL_SLAVES, EC_STATE_OPERATIONAL, EC_TIMEOUTSTATE);
+
+  ec_readstate();
   print_slave_states("After Writing state");
   /* wait for all slaves to reach OP state */
-  ec_statecheck(el2574_slave, EC_STATE_OPERATIONAL,  EC_TIMEOUTSTATE);
+
   print_slave_states("After Statecheck");
 
   if (ec_slave[el2574_slave].state != EC_STATE_OPERATIONAL) {
@@ -109,8 +123,10 @@ int main(int argc, char **argv) {
               << ec_slave[el2574_slave].state
               << "\n Exiting..."
               << std::endl;
+      sleep(4);
       exit(EXIT_FAILURE);
   }
+
   // For all Slave modules, do a 8x32 checkerboard pattern
   for (int i = 1; i <= ec_slavecount; i++) {
     // TODO (TIM): Magic number
